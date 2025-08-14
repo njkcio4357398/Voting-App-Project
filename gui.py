@@ -1,3 +1,4 @@
+pip install PyQt6
 from __future__ import annotations
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtWidgets import QMainWindow, QMessageBox
