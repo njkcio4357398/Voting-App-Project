@@ -48,13 +48,13 @@ class VoteManager:
     def _load_votes(self) -> None:
         with self.vote_path.open("r", newline="", encoding="utf-8") as f:
             r = csv.reader(f)
-            next(r, None)  # header
+            next(r, None)  
             for row in r:
                 if len(row) >= 2 and row[0] in self._votes:
                     try:
                         self._votes[row[0]] = int(row[1])
                     except ValueError:
-                        pass  # ignore bad rows
+                        pass  
 
     def _save_votes(self) -> None:
         with self.vote_path.open("w", newline="", encoding="utf-8") as f:
@@ -66,7 +66,7 @@ class VoteManager:
     def _load_voters(self) -> None:
         with self.voter_path.open("r", newline="", encoding="utf-8") as f:
             r = csv.reader(f)
-            next(r, None)  # header
+            next(r, None)  
             for row in r:
                 if row and row[0].strip():
                     self._voters.add(row[0].strip().lower())
