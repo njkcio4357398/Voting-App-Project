@@ -1,4 +1,4 @@
-from __future__ import annotations
+ from __future__ import annotations
 import sys
 from PyQt6.QtWidgets import QApplication
 from gui import VotingApp
