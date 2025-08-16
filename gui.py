@@ -9,19 +9,16 @@ class VotingApp(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        # Load the .ui built in Qt Designer
         uic.loadUi(str(BASE_DIR / "voting.ui"), self)
 
-        # Read candidates from the ComboBox (skip the first blank)
         items = []
         for i in range(self.combo_box.count()):
             text = self.combo_box.itemText(i).strip()
-            if text:  # ignore blank
+            if text: 
                 items.append(text)
 
         self.vote_manager = VoteManager(candidates=items)
 
-        # Wire buttons
         self.vote_button.clicked.connect(self.cast_vote)
         self.results_button.clicked.connect(self.show_results)
 
