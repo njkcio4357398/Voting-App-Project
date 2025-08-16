@@ -7,10 +7,10 @@ BASE_DIR = Path(__file__).resolve().parent
 
 class VoteManager:
     """
-    Manages votes and tracks who has voted.
+    Manages votes and tracks who has already voted.
     Persists to:
-      - votes.csv:  Candidate, Votes
-      - voters.csv: Voter
+      - votes.csv  -> Candidate, Votes
+      - voters.csv -> Voter
     """
 
     def __init__(
@@ -38,7 +38,6 @@ class VoteManager:
                 w.writerow(["Candidate", "Votes"])
                 for c in self._candidates:
                     w.writerow([c, 0])
-
         if not self.voter_path.exists():
             with self.voter_path.open("w", newline="", encoding="utf-8") as f:
                 w = csv.writer(f)
@@ -48,7 +47,7 @@ class VoteManager:
     def _load_votes(self) -> None:
         with self.vote_path.open("r", newline="", encoding="utf-8") as f:
             r = csv.reader(f)
-            next(r, None)  
+            next(r, None) 
             for row in r:
                 if len(row) >= 2 and row[0] in self._votes:
                     try:
@@ -66,7 +65,7 @@ class VoteManager:
     def _load_voters(self) -> None:
         with self.voter_path.open("r", newline="", encoding="utf-8") as f:
             r = csv.reader(f)
-            next(r, None)  
+            next(r, None) 
             for row in r:
                 if row and row[0].strip():
                     self._voters.add(row[0].strip().lower())
