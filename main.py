@@ -1,13 +1,14 @@
-from __future__ import annotations
-import sys
 from PyQt6.QtWidgets import QApplication
-from gui import VotingWindow
+from gui import VotingApp
+import sys
 
 def main() -> None:
+    """Entry point for the voting application."""
     app = QApplication(sys.argv)
-    w = VotingWindow()
-    w.show()
+    window = VotingApp()
+    window.show()
     sys.exit(app.exec())
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()
