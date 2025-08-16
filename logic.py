@@ -22,7 +22,6 @@ class VoteManager:
         self.vote_path = (BASE_DIR / vote_file) if not isinstance(vote_file, Path) else vote_file
         self.voter_path = (BASE_DIR / voter_file) if not isinstance(voter_file, Path) else voter_file
         self._candidates = list(candidates) if candidates else ["John", "Jane"]
-        self._candidates = [c for c in (candidates or []) if c]
         self._votes: Dict[str, int] = {c: 0 for c in self._candidates}
         self._voters: Set[str] = set()
 
