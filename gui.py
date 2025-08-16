@@ -1,76 +1,55 @@
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QComboBox, QLineEdit
-)
-from logic import VoteManager
-
+from __future__ import annotations
+from pathlib import Path
+from PyQt6 import uic
+from PyQt6.QtWidgets import QWidget, QMessageBox
+from logic import VoteManager, BASE_DIR
 
 class VotingApp(QWidget):
-    """
-    Main GUI window for the voting application.
-    Allows user to vote for a candidate and view results.
-    """
-    def __init__(self):
-        """Initialize the voting app and setup the UI."""
+    """Main GUI window for the voting application (Qt Designer UI)."""
+
+    def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Voting App")
-        self.vote_manager = VoteManager()
-        self.setup_ui()
+        # Load the .ui built in Qt Designer
+        uic.loadUi(str(BASE_DIR / "voting.ui"), self)
 
-    def setup_ui(self) -> None:
-        """Configure and display the GUI components."""
-        layout = QVBoxLayout()
+        # Read candidates from the ComboBox (skip the first blank)
+        items = []
+        for i in range(self.combo_box.count()):
+            text = self.combo_box.itemText(i).strip()
+            if text:  # ignore blank
+                items.append(text)
 
-        self.voter_label = QLabel("Enter your name:")
-        layout.addWidget(self.voter_label)
+        self.vote_manager = VoteManager(candidates=items)
 
-        self.voter_input = QLineEdit()
-        layout.addWidget(self.voter_input)
-
-        self.label = QLabel("Select a candidate to vote:")
-        layout.addWidget(self.label)
-
-        self.combo_box = QComboBox()
-        self.combo_box.addItems(["", "Bianca", "Edward", "Felicia"])
-        layout.addWidget(self.combo_box)
-
-        self.vote_button = QPushButton("Vote")
+        # Wire buttons
         self.vote_button.clicked.connect(self.cast_vote)
-        layout.addWidget(self.vote_button)
-
-        self.results_button = QPushButton("Show Results")
         self.results_button.clicked.connect(self.show_results)
-        layout.addWidget(self.results_button)
 
-        self.setLayout(layout)
-
+    # ---- slots ----
     def cast_vote(self) -> None:
-        """Handles the voting process for a selected candidate and checks for duplicate voters."""
         voter = self.voter_input.text().strip()
-        candidate = self.combo_box.currentText()
-
-        if not voter:
-            QMessageBox.warning(self, "Invalid Input", "Please enter your name.")
-            return
-
-        if candidate == "":
-            QMessageBox.warning(self, "Invalid Input", "Please select a candidate.")
-            return
+        candidate = self.combo_box.currentText().strip()
 
         try:
             self.vote_manager.add_vote(candidate, voter)
-            QMessageBox.information(self, "Success", f"{voter} voted for {candidate}.")
-            self.voter_input.clear()
-            self.combo_box.setCurrentIndex(0)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            self.status_label.setText(str(e))
+            QMessageBox.warning(self, "Invalid Input", str(e))
+            return
+
+        self.status_label.setText("Vote recorded.")
+        QMessageBox.information(self, "Success", f"{voter} voted for {candidate}.")
+        self.voter_input.clear()
+        self.combo_box.setCurrentIndex(0)
 
     def show_results(self) -> None:
-        """Displays the current vote tally in a popup window."""
         try:
             results = self.vote_manager.get_results()
-            message = "\n".join(f"{name}: {count} votes" for name, count in results.items())
-            total = sum(results.values())
-            message += f"\nTotal Votes: {total}"
-            QMessageBox.information(self, "Voting Results", message)
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+            return
+
+        total = sum(results.values())
+        lines = [f"{name}: {count} votes" for name, count in results.items()]
+        lines.append(f"Total Votes: {total}")
+        QMessageBox.information(self, "Voting Results", "\n".join(lines))
