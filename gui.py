@@ -1,67 +1,76 @@
-pip install PyQt6
-from __future__ import annotations
-from PyQt6 import QtWidgets, uic
-from PyQt6.QtWidgets import QMainWindow, QMessageBox
-from PyQt6.QtCore import QButtonGroup
-from logic import VotingLogic
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QPushButton, QMessageBox, QComboBox, QLineEdit
+)
+from logic import VoteManager
 
-class VotingWindow(QMainWindow):
-    def __init__(self) -> None:
+
+class VotingApp(QWidget):
+    """
+    Main GUI window for the voting application.
+    Allows user to vote for a candidate and view results.
+    """
+    def __init__(self):
+        """Initialize the voting app and setup the UI."""
         super().__init__()
-        uic.loadUi("voting.ui", self)
+        self.setWindowTitle("Voting App")
+        self.vote_manager = VoteManager()
+        self.setup_ui()
 
-        # Logic layer
-        self.logic = VotingLogic()
+    def setup_ui(self) -> None:
+        """Configure and display the GUI components."""
+        layout = QVBoxLayout()
 
-        # Group radio buttons (exclusive selection)
-        self._group = QButtonGroup(self)
-        self._group.addButton(self.radioJohn)
-        self._group.addButton(self.radioJane)
-        self._group.setExclusive(True)
+        self.voter_label = QLabel("Enter your name:")
+        layout.addWidget(self.voter_label)
 
-        # Wire signals
-        self.btnVote.clicked.connect(self.on_vote)
-        self.btnResults.clicked.connect(self.on_results)
-        self.actionExit.triggered.connect(self.close)
-        self.actionAbout.triggered.connect(self.on_about)
+        self.voter_input = QLineEdit()
+        layout.addWidget(self.voter_input)
 
-    def _selected_candidate(self) -> str | None:
-        if self.radioJohn.isChecked():
-            return "John"
-        if self.radioJane.isChecked():
-            return "Jane"
-        return None
+        self.label = QLabel("Select a candidate to vote:")
+        layout.addWidget(self.label)
 
-    def on_vote(self) -> None:
-        voter_id = self.inputId.text().strip()
-        candidate = self._selected_candidate()
-        try:
-            self.logic.add_vote(voter_id, candidate)
-        except ValueError as e:
-            self.lblStatus.setText(str(e))
+        self.combo_box = QComboBox()
+        self.combo_box.addItems(["", "Bianca", "Edward", "Felicia"])
+        layout.addWidget(self.combo_box)
+
+        self.vote_button = QPushButton("Vote")
+        self.vote_button.clicked.connect(self.cast_vote)
+        layout.addWidget(self.vote_button)
+
+        self.results_button = QPushButton("Show Results")
+        self.results_button.clicked.connect(self.show_results)
+        layout.addWidget(self.results_button)
+
+        self.setLayout(layout)
+
+    def cast_vote(self) -> None:
+        """Handles the voting process for a selected candidate and checks for duplicate voters."""
+        voter = self.voter_input.text().strip()
+        candidate = self.combo_box.currentText()
+
+        if not voter:
+            QMessageBox.warning(self, "Invalid Input", "Please enter your name.")
             return
 
-        # Success: clear status label, inputs, and selections
-        self.lblStatus.setText("")
-        self.inputId.clear()
-        self._group.setExclusive(False)
-        self.radioJohn.setChecked(False)
-        self.radioJane.setChecked(False)
-        self._group.setExclusive(True)
+        if candidate == "":
+            QMessageBox.warning(self, "Invalid Input", "Please select a candidate.")
+            return
 
-        QMessageBox.information(self, "Vote Recorded", "Your vote has been recorded.")
+        try:
+            self.vote_manager.add_vote(candidate, voter)
+            QMessageBox.information(self, "Success", f"{voter} voted for {candidate}.")
+            self.voter_input.clear()
+            self.combo_box.setCurrentIndex(0)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
 
-    def on_results(self) -> None:
-        t = self.logic.tally()
-        QMessageBox.information(
-            self,
-            "Current Results",
-            f"John – {t['John']}\nJane – {t['Jane']}\nTotal – {t['Total']}"
-        )
-
-    def on_about(self) -> None:
-        QMessageBox.about(
-            self,
-            "About",
-            "Voting Application\nBuilt with PyQt6 + Qt Designer",
-        )
+    def show_results(self) -> None:
+        """Displays the current vote tally in a popup window."""
+        try:
+            results = self.vote_manager.get_results()
+            message = "\n".join(f"{name}: {count} votes" for name, count in results.items())
+            total = sum(results.values())
+            message += f"\nTotal Votes: {total}"
+            QMessageBox.information(self, "Voting Results", message)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
